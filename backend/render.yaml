@@ -11,6 +11,6 @@ services:
         value: 3.11
       # Add other envVars like SECRET_KEY and DEBUG below:
       - key: DJANGO_SECRET_KEY
-        value: your-secret-key
+        value: 4K7dLp9aB8
       - key: DEBUG
         value: False
