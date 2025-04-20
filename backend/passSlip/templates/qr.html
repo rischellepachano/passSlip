@@ -1,0 +1,174 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f6ff;
+            height: 100vh;
+            margin: 0;
+        }
+        .block {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+
+        }
+        .logo {
+            flex: 1;
+            text-align: left;
+        }
+        .logo img {
+            width: 300px; /* Size of the logo */
+            height: auto; /* Maintain aspect ratio */
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3)); /* PNG shadow effect */
+        }
+
+        .container {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #020527;
+            margin-bottom: 20px;
+        }
+        #qrcode img {
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            padding: 6px;
+            border-radius: 8px;
+        }
+        #textInput {
+            display: none;
+        }
+        #clock {
+            font-size: 24px;
+            font-weight: bold;
+            color: #030735; 
+        }
+        #date {
+            font-size: 12px;
+            color: #030735;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+    </div>
+    <div class="container">
+        <div style="display: flex;">
+            <div class="logo">
+                
+                <img src="{% static 'img/Logo.png' %}" alt="Logo">
+            </div>            
+            <div >
+                <div id="clock">00:00:00</div>
+                <div id="date">January 1, 2024</div>
+            </div>
+        </div>
+
+    </div>
+    <div class="block">
+
+    <div class="container">
+
+        <h1>SCAN PASS SLIP HERE!</h1>
+
+        <!-- QR code value from Django (hidden for QR generation) -->
+        <h1 id="textInput" style="display: none;">QR: {{ item }}</h1>
+        <div id="qrcode"></div>
+    </div>
+</div>
+<script src="{% static 'img/apiConfig.js' %}"></script>
+
+    <script>
+
+        var textInput = document.getElementById("textInput").innerText.replace('QR: ', '');
+        function generateQR() {
+            // Get the QR code value from the hidden <h1> element
+
+            // Clear any existing QR code
+            var qrCodeDiv = document.getElementById("qrcode");
+            qrCodeDiv.innerHTML = "";
+
+            // Generate the QR code using the QR Code Generator API
+            var apiUrl = "https://api.qrserver.com/v1/create-qr-code/?data=" + textInput + "&size=350x350";
+            console.log('Generated QR code URL:', apiUrl);
+
+            var img = document.createElement("img");
+            img.src = apiUrl;
+
+            // Append the QR code image to the div
+            qrCodeDiv.appendChild(img);
+        }
+
+        // Call the function to generate the QR code when the page loads
+        generateQR();
+
+
+
+
+    </script>
+
+<script>
+    function updateTime() {
+        const now = new Date();
+
+        // Format time: HH:MM:SS
+        let hours = String(now.getHours()).padStart(2, '0');
+        if (hours > 13) {
+            hours = String(hours - 12).padStart(2, '0');  // Subtract 12 and re-pad if necessary
+        }
+        
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const timeString = `${hours}:${minutes}:${seconds}`;
+
+        // Format date: Month Day, Year
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const dateString = now.toLocaleDateString(undefined, options);
+
+        // Update DOM elements
+        document.getElementById('clock').textContent = timeString;
+        document.getElementById('date').textContent = dateString;
+
+        fetch(`${apiDirectory}passSlip/api/slips/latest`)
+            .then(response => response.json())
+            .then(data => {
+                // Handle the latest slip data here
+                    if (textInput === data.qr) {
+                    }
+                    else {
+                        console.log('Generate New')
+                        textInput = data.qr
+                        generateQR();
+                    }
+            })
+            .catch(error => {
+                console.error("Error fetching latest slip:", error);
+            });
+
+    }
+
+
+
+
+    // Call updateTime every second
+    setInterval(updateTime, 1000);
+
+    // Initial call to display time immediately on load
+    updateTime();
+</script>
+</body>
+</html>
